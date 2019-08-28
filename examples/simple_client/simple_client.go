@@ -1,16 +1,29 @@
 package main
 
 import (
+	"flag"
 	"log"
 
 	"github.com/ros-tel/1c-connect-pipe"
 )
 
+var (
+	login = flag.String("login", "", "Set Login")
+	debug = flag.Bool("debug", false, "Print debug information on stderr")
+)
+
 func main() {
 	log.SetFlags(log.Ldate | log.Lmicroseconds | log.Lshortfile)
 
+	flag.Parse()
+
+	if *login == "" {
+		flag.PrintDefaults()
+		log.Fatal("Required parameter \"login\" not set")
+	}
+
 	// Инициируем клиент
-	client := pipe.InitClient("271914", false)
+	client := pipe.InitClient(*login, *debug)
 
 	/*
 	 *  \/ Подписываемся на все возможные события: \/
