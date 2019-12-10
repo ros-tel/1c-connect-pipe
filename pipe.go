@@ -2,14 +2,15 @@ package pipe
 
 import (
 	"bytes"
+	"encoding/binary"
 	"encoding/xml"
 	"errors"
 	"io"
 	"log"
 	"net"
 	"time"
+	"unicode/utf16"
 
-	"github.com/Grovespaz/go-tds/utf16"
 	"github.com/Microsoft/go-winio"
 )
 
@@ -156,25 +157,23 @@ func next(conn net.Conn, debug bool) (interface{}, error) {
 
 	}
 
+	if packetSize%2 != 0 {
+		return nil, errors.New("Error PacketLen")
+	}
+
 	// Выделяем буфер и читаем всё сообщение
-	buf := make([]byte, packetSize)
-	readBytes, err := io.ReadFull(conn, buf)
-	if err != nil || readBytes != packetSize {
-		log.Printf("Read bad data %+v", err)
+	body := make([]uint16, packetSize/2)
+	err = binary.Read(conn, binary.LittleEndian, &body)
+	if err != nil {
+		log.Println("failed to Read:", err, len(body))
 		return nil, errors.New("Read bad data")
 	}
 
-	/*
-		if debug {
-			log.Printf("Read %x -> %s\n", buf, buf)
-		}
-	*/
-
 	// Сообщения имеют кодировку UTF-16
-	byteMessage := utf16.Decode(buf)
+	byteMessage := utf16.Decode(body)
 
 	if debug {
-		log.Printf("Read %s\n", byteMessage)
+		log.Printf("Read %x -> %s\n", byteMessage, string(byteMessage))
 	}
 
 	// Вешаем XML-декодер (bytes.NewReader принимает []byte, а byteMessage у нас []rune, соотв. конвертим)

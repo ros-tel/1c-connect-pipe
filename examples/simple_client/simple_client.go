@@ -35,6 +35,12 @@ func main() {
 		Object:    "AgentOnlineStatus",
 		Initiator: "Incoming",
 	})
+	client.SendCommand(pipe.Command{
+		Action:    "EventSubscribe",
+		Mode:      "ServicesClients",
+		Object:    "AgentOnlineStatus",
+		Initiator: "Self",
+	})
 
 	// ... текстовых сообщений
 	client.SendCommand(pipe.Command{
